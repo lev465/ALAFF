@@ -30,7 +30,7 @@ T1 = Francis_Step( T1 )
 T1 = Francis_Step( T1 )
 
 % See what happens if you uncomment the next line.  
-% T1 = Francis_Step( T1 )
+%T1 = Francis_Step( T1 )
 
 % Only the lower triangular part of T1 was updated.  Here we make it
 % symmetric.
@@ -46,4 +46,3 @@ eig( T1 )
 % Print the final matrix.  The (m,m-1) entry should be small.  
 disp( 'T1 after ')
 T1
-

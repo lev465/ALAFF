@@ -1,5 +1,6 @@
 function [ A_out, t_out, r_out ] = BiRed( A, t, r )
-
+  
+  assert (size (A, 1) == size (A, 2), 'matrix must be square');
   [ ATL, ATR, ...
     ABL, ABR ] = FLA_Part_2x2( A, ...
                                0, 0, 'FLA_TL' );
@@ -35,14 +36,23 @@ function [ A_out, t_out, r_out ] = BiRed( A, t, r )
     %------------------------------------------------------------%
 
 
+    [alpha11, a21, tau1] = Housev(alpha11, a21);
+
+    if (size(a21, 1) ~= 0)
     
+        temp = (eye(size([1; a21], 1)) - 1/tau1 * [1; a21] * [1; a21]') * [a12t; A22];
     
+        a12t = temp(1, :);
+        A22 = temp(2:end, :);
     
+        [u12, rho1] = Housev1(a12t');
+        
+        a12t = u12';
     
-    
-    
-    
-    
+        u12(1) = 1;
+        
+        A22 = A22 * (eye(size(u12, 1) ) - 1/rho1 * u12 * u12');
+    end
     
     %------------------------------------------------------------%
 
@@ -51,7 +61,6 @@ function [ A_out, t_out, r_out ] = BiRed( A, t, r )
                                              a10t, alpha11, a12t, ...
                                              A20,  a21,     A22, ...
                                              'FLA_TL' );
-
     [ tT, ...
       tB ] = FLA_Cont_with_3x1_to_2x1( t0, ...
                                        tau1, ...

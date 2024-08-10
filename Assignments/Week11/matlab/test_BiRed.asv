@@ -28,5 +28,5 @@ for i = 1:100
     disp('Singular values of A')
     svd( A )
 
-    assert( all (svd (Bi) - svd (A) < 1e-5), 'different singular values');
+    assert( all (svd (Bi) - ))
 end

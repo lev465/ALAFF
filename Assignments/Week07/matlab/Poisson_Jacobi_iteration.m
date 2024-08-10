@@ -42,14 +42,14 @@ for k = 1:nk
     % update all the interior points
     for i=2:N+1
         for j=2:N+1
-            U( i,j ) = % complete this update
+            U( i,j ) = (h^2 * F(i,j) + Uold(i, j-1) + Uold(i-1, j) + Uold(i+1, j) + Uold(i, j+1))/4; % complete this update
         end
     end 
     mesh( x, y, U );
     axis( [ 0 1 0 1 -1.5 1.5 ]);
     
     % wait to continue to the next iteration
-    next = input( 'press RETURN to continue' );
+    %next = input( 'press RETURN to continue' );
 end
 
 

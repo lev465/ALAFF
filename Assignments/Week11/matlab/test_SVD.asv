@@ -2,8 +2,7 @@ format long
 
 % matrix size
 
-for i = 1:100
-    m = randi(10, 1, "int8");
+    m = 5;
     
     % Generate a random matrix
     A = rand( m, m );
@@ -21,12 +20,29 @@ for i = 1:100
     
     % Quick check if it was probably done correctly: Check the singular values of
     % the bidiagonal matrix (extracted from B) with those of the original matrix.
-    Bi = BiFromB( B );
+    Bi = BiFromB( B )
     disp('Singular values of B')
     svd( Bi )
     
     disp('Singular values of A')
     svd( A )
 
+    Bi = [-1.679406396268035, 1.951679208368996, 0, 0                   0
+                   0  -1.057510531308749  -0.419289367330783                   0                   0
+                   0                   0   0.356699844002181   0.248899683059339                   0
+                   0                   0                   0   0.471234144946115  -0.135215279510727
+                   0                   0                   0                   0  -0.536993967671868];
+
+
+    [S, U, V] = SVD_BiDiag_ImpShift(Bi);
+
+    U;
+    diag(S)
+    V;
+
+    [U_bi, S_bi, V_bi] = svd(Bi);
+    
+    format short
+    U./U_bi
+
     assert( all (svd (Bi) - svd (A) < 1e-5), 'different singular values');
-end

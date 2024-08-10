@@ -1,0 +1,133 @@
+function [S, U, V] = SVD_BiDiag_ImpShift(B)
+%SVD_BIDIAG_IMPSHIFT Computes the SVD of a bidiagonal matrix
+%   Inputs:     B - Bidiagonal matrix
+%   Outputs:    S - vector of singular values of B
+%               V - matrix from SVD st B = USV^T 
+%               U - matrix from SVD st B = USV^T
+format long
+
+
+assert (size(B,1) == size(B,2), 'matrix is not square');
+
+if (size(B,1) == 1)
+    S = B(1,1); U = 1; V = 1;
+    return ;
+end
+
+m = size(B,1);
+
+S = zeros(m,1);
+U = eye(m);
+V = eye(m);
+
+B1 = B;
+maxiter = 1e6;
+offset = 0;
+
+while m >= 2
+    niter = 0;
+
+    while abs( B(m-1, m) ) > eps(1) * ( sqrt( abs (B (m-1, m-1) ) + abs (B (m, m) ) ) ) && niter < maxiter
+        %T_11 = B_11 ^ 2
+        %T_MM = B_M-1_M ^ 2 + B_MM^2
+        %T_21 = B_12*B_11
+        % Apply first givens rotation
+        
+        G = Givens_rotation ( [ B(1,1)^2 - (B(m-1, m)^2 + B(m, m)^2)
+                                B(1,2)*B(1,1) ]);
+        % update V
+        V(1:2, :) = G * V(1:2, :);
+        
+        % Apply Givens Rotation to the matrix to introduce the bulge
+        B(1:2, 1:2) = [B(1, 1) B(1,2); 0 B(2, 2)] * G;
+        
+        % Chase the bulge until it is in the last row of the matrix
+        for i=1:m-2
+          G = Givens_rotation( [ B(i,i) 
+                                 B(i+1,i)      ]);
+
+          % update U 
+          %U(i:i+1, :) = G' * U(i:i+1, :);
+          U(:, i:i+1) = U(:, i:i+1)* G';
+
+          B(i:i+1, :) = G' * B(i:i+1, :);
+
+          % Check for deflation possibilities
+          if abs(B(i , i+1)) <= eps(1) * ( sqrt( abs (B (i, i) ) + abs (B (i+1, i+1) ) ) )
+              S(1:i, 1) = SVD_BiDiag_ImpShift(B(1:i, 1:i));
+              B = B(i+1:m, i+1:m);
+              m = m - i;
+              break;
+          end
+          
+          % update V
+          V(i+1:i+2, :) = G* V(i+1:i+2, :);
+
+          G = Givens_rotation( [ B(i,i+1) 
+                                 B(i,i+2)      ]);
+          B(:, i+1:i+2) = B(:, i+1:i+2) * G;
+        
+        end
+        
+        % Remove the bulge from the last row
+        G = Givens_rotation( [ B(m-1,m-1) 
+                               B(m,  m-1) ]);
+        % update U
+        %U(m-1:m, :) = G' * U(m-1:m, :);
+        U(:, m-1:m) = U(:, m-1:m) * G';
+        
+        B(m-1:m, :) = G' * B(m-1:m, :);
+
+        niter = niter + 1;
+
+    end
+
+    S(m,1) = B(m, m);
+
+    m = m - 1;
+
+    B = B(1:m, 1:m);
+    if (niter == maxiter)
+        niter
+        B
+    end
+end
+
+S(1,1) = B(1,1);
+
+% Reorder U, S, V to fit SVD definition
+[S, I] = sort (abs(S), 'descend');
+I;
+U_temp = U;
+V_temp = V;
+
+for i=1:size(I,1)
+    % Change columns of U
+    
+    U(:, i) = U_temp(:, I(i));
+
+    % Change rows of V
+    
+    V(i, :) = V_temp(I(i), i);
+
+end
+
+end
+
+function G = Givens_rotation( x )
+    %Givens_rotation Compute Givens rotation G so that G' * x = || x ||_2
+    % e_0
+    
+    [ m, n ] = size( x );
+
+    assert( m==2 && n==1, 'x must be 2 x 1' );
+    
+    normx = norm( x );
+    
+    gamma = x(1) / normx;
+    sigma = x(2) / normx;
+    
+    G = [ (gamma) (-sigma)
+          (sigma)  (gamma) ];    
+end
+
